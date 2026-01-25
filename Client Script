@@ -1,0 +1,212 @@
+local Camera = workspace.CurrentCamera
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = game:GetService("Players").LocalPlayer
+
+local Plots = workspace:WaitForChild("Plots")
+local Base1 = Plots:WaitForChild("Base1")
+local Base2 = Plots:WaitForChild("Base2")
+local Base3 = Plots:WaitForChild("Base3")
+local Base4 = Plots:WaitForChild("Base4")
+local Base5 = Plots:WaitForChild("Base5")
+local Base6 = Plots:WaitForChild("Base6")
+
+--ReplicatedStorage
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local ClaimPlot = Remotes:WaitForChild("ClaimPlot")
+
+--UIs
+local FirstFrame = script.Parent:WaitForChild("FirstFrame")
+local Title = FirstFrame:WaitForChild("Title")
+local Play = FirstFrame:WaitForChild("Play")
+local Back = FirstFrame:WaitForChild("Back")
+local Right = FirstFrame:WaitForChild("Right")
+local Left = FirstFrame:WaitForChild("Left")
+local BaseName = FirstFrame:WaitForChild("BaseName")
+local Claim = FirstFrame:WaitForChild("Claim")
+Title.Visible = true
+Play.Visible = true
+
+--Workspace
+local Cameras = workspace:WaitForChild("Cameras")
+local FirstCamera = Cameras:WaitForChild("FirstCamera")
+local Base1Camera = Cameras:WaitForChild("Base1Camera")
+local Base2Camera = Cameras:WaitForChild("Base2Camera")
+local Base3Camera = Cameras:WaitForChild("Base3Camera")
+local Base4Camera = Cameras:WaitForChild("Base4Camera")
+local Base5Camera = Cameras:WaitForChild("Base5Camera")
+local Base6Camera = Cameras:WaitForChild("Base6Camera")
+local TInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 0)
+
+
+
+Camera.CameraType = Enum.CameraType.Scriptable
+Camera.CFrame = FirstCamera.CFrame
+local PresentCamera = 0
+
+local function getPlayer(Base)
+	if not Base then return end
+	if not Base:IsA("StringValue") then return end
+	return Base.Value
+end
+local function setBaseName(Base)
+	if not Base then return end
+	BaseName.Text = getPlayer(Base)
+	task.spawn(function()
+		task.wait(1)
+		if getPlayer(Base) == "Empty" then
+			Claim.Visible = true
+		end
+	end)
+end
+Play.Activated:Connect(function()
+	Title.Visible = false
+	Play.Visible = false
+	
+	PresentCamera = 1
+	TweenService:Create(Camera, TInfo, {CFrame = Base1Camera.CFrame}):Play()
+	task.wait(1)
+	
+	Right.Visible = true
+	Left.Visible = true
+	Back.Visible = true
+	BaseName.Visible = true
+	if getPlayer(Base1) == "Empty" then
+		Claim.Visible = true
+	end
+end)
+
+
+Back.Activated:Connect(function()
+	Right.Visible = false
+	Left.Visible = false
+	Back.Visible = false
+	BaseName.Visible = false
+	Claim.Visible = false
+	
+	PresentCamera = 0
+	TweenService:Create(Camera, TInfo, {CFrame = FirstCamera.CFrame}):Play()
+	task.wait(1)
+	
+	Title.Visible = true
+	Play.Visible = true
+end)
+
+Right.Activated:Connect(function()
+	Right.Visible = false
+	Left.Visible = false
+	Back.Visible = false
+	BaseName.Visible = false
+	Claim.Visible = false
+	
+	PresentCamera -= 1
+	if PresentCamera == 0 then
+		PresentCamera = 6
+	end
+	if PresentCamera == 1 then
+		setBaseName(Base1)
+		TweenService:Create(Camera, TInfo, {CFrame = Base1Camera.CFrame}):Play()
+	end
+	if PresentCamera == 2 then
+		setBaseName(Base2)
+		TweenService:Create(Camera, TInfo, {CFrame = Base2Camera.CFrame}):Play()
+	end
+	if PresentCamera == 3 then
+		setBaseName(Base3)
+		TweenService:Create(Camera, TInfo, {CFrame = Base3Camera.CFrame}):Play()
+	end
+	if PresentCamera == 4 then
+		setBaseName(Base4)
+		TweenService:Create(Camera, TInfo, {CFrame = Base4Camera.CFrame}):Play()
+	end
+	if PresentCamera == 5 then
+		setBaseName(Base5)
+		TweenService:Create(Camera, TInfo, {CFrame = Base5Camera.CFrame}):Play()
+	end
+	if PresentCamera == 6 then
+		setBaseName(Base6)
+		TweenService:Create(Camera, TInfo, {CFrame = Base6Camera.CFrame}):Play()
+	end
+	task.wait(1)
+	
+	Right.Visible = true
+	Left.Visible = true
+	Back.Visible = true
+	BaseName.Visible = true
+end)
+Left.Activated:Connect(function()
+	Right.Visible = false
+	Left.Visible = false
+	Back.Visible = false
+	BaseName.Visible = false
+	Claim.Visible = false
+
+	PresentCamera += 1
+	if PresentCamera == 7 then
+		PresentCamera = 1
+	end
+	if PresentCamera == 1 then
+		setBaseName(Base1)
+		TweenService:Create(Camera, TInfo, {CFrame = Base1Camera.CFrame}):Play()
+	end
+	if PresentCamera == 2 then
+		setBaseName(Base2)
+		TweenService:Create(Camera, TInfo, {CFrame = Base2Camera.CFrame}):Play()
+	end
+	if PresentCamera == 3 then
+		setBaseName(Base3)
+		TweenService:Create(Camera, TInfo, {CFrame = Base3Camera.CFrame}):Play()
+	end
+	if PresentCamera == 4 then
+		setBaseName(Base4)
+		TweenService:Create(Camera, TInfo, {CFrame = Base4Camera.CFrame}):Play()
+	end
+	if PresentCamera == 5 then
+		setBaseName(Base5)
+		TweenService:Create(Camera, TInfo, {CFrame = Base5Camera.CFrame}):Play()
+	end
+	if PresentCamera == 6 then
+		setBaseName(Base6)
+		TweenService:Create(Camera, TInfo, {CFrame = Base6Camera.CFrame}):Play()
+	end
+	task.wait(1)
+
+	Right.Visible = true
+	Left.Visible = true
+	Back.Visible = true
+	BaseName.Visible = true
+end)
+
+for i, baseValue in Plots:GetChildren() do
+	if not baseValue:IsA("StringValue") then continue end
+	baseValue.Changed:Connect(function()
+		if baseValue.Name == "Base"..tostring(PresentCamera) then
+			BaseName.Text = baseValue.Value
+			Claim.Visible = false
+		end
+	end)
+end
+Claim.Activated:Connect(function()
+	Right.Visible = false
+	Left.Visible = false
+	Back.Visible = false
+	BaseName.Visible = false
+	Claim.Visible = false
+	
+	if PresentCamera == 1 then
+		ClaimPlot:FireServer("Base1")
+	elseif PresentCamera == 2 then
+		ClaimPlot:FireServer("Base2")
+	elseif PresentCamera == 3 then
+		ClaimPlot:FireServer("Base3")
+	elseif PresentCamera == 4 then
+		ClaimPlot:FireServer("Base4")
+	elseif PresentCamera == 5 then
+		ClaimPlot:FireServer("Base5")
+	elseif PresentCamera == 6 then
+		ClaimPlot:FireServer("Base6")
+	end
+	
+	Camera.CameraType = Enum.CameraType.Custom
+	Camera.CameraSubject = player.Character.Humanoid
+end)
