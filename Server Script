@@ -1,0 +1,87 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+
+--ReplicatedStorage
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local ClaimPlot = Remotes:WaitForChild("ClaimPlot")
+
+--Workspace
+local Plots = workspace:WaitForChild("Plots")
+local Base1 = Plots:WaitForChild("Base1")
+local Base2 = Plots:WaitForChild("Base2")
+local Base3 = Plots:WaitForChild("Base3")
+local Base4 = Plots:WaitForChild("Base4")
+local Base5 = Plots:WaitForChild("Base5")
+local Base6 = Plots:WaitForChild("Base6")
+local Spawn1 = Plots:WaitForChild("Spawn1")
+local Spawn2 = Plots:WaitForChild("Spawn2")
+local Spawn3 = Plots:WaitForChild("Spawn3")
+local Spawn4 = Plots:WaitForChild("Spawn4")
+local Spawn5 = Plots:WaitForChild("Spawn5")
+local Spawn6 = Plots:WaitForChild("Spawn6")
+
+--DataStore
+local PlotData = DataStoreService:GetDataStore("PlotData")
+
+
+
+
+local function SavePlot(plot: Folder, UserId)
+	local e,m = pcall(function()
+		
+			
+		local Stuff = plot:FindFirstChild("Stuff")
+		local StuffData = {}
+		local Index = plot:FindFirstChild("Index")
+		for _, object: Model in Stuff:GetChildren() do
+			table.insert(StuffData,{
+				Name = object.Name;
+				cframe = {Index.CFrame:ToObjectSpace(object:GetPivot()):GetComponents()}
+			})
+		end
+		PlotData:SetAsync(UserId,StuffData)
+	end)
+	if not e then warn(m) end
+end
+local function LoadPlot(UserId,plot)
+	local e,m = pcall(function()
+		local getData = PlotData:GetAsync(UserId)
+
+		local Index = plot:FindFirstChild("Index")
+
+		if getData then
+			for _, object in getData do
+				local model = ServerStorage:FindFirstChild(object.Name)
+				if not model then continue end
+				local clone = model:Clone()
+				clone:PivotTo(Index.CFrame:ToWorldSpace(CFrame.new(table.unpack(object.cframe))))
+				clone.Parent = plot:FindFirstChild("Stuff")
+			end
+		end
+	end)
+	if not e then warn(m) end
+end
+ClaimPlot.OnServerEvent:Connect(function(player, plotName)
+	local plot = Plots:FindFirstChild(plotName)
+	if not plot then return end
+	if plot.Value ~= "Empty" then return end
+	
+	plot.Value = player.Name
+	if plot.Name == "Base1" then
+		player.Character.HumanoidRootPart.CFrame = Spawn1.CFrame
+	elseif plot.Name == "Base2" then
+		player.Character.HumanoidRootPart.CFrame = Spawn2.CFrame
+	elseif plot.Name == "Base3" then
+		player.Character.HumanoidRootPart.CFrame = Spawn3.CFrame
+	elseif plot.Name == "Base4" then
+		player.Character.HumanoidRootPart.CFrame = Spawn4.CFrame
+	elseif plot.Name == "Base5" then
+		player.Character.HumanoidRootPart.CFrame = Spawn5.CFrame
+	elseif plot.Name == "Base6" then
+		player.Character.HumanoidRootPart.CFrame = Spawn6.CFrame
+	end
+	LoadPlot(player.UserId,Base1)
+	SavePlot(Base1,player.UserId)
+end)
