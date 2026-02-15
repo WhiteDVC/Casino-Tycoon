@@ -2,6 +2,8 @@ local Camera = workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game:GetService("Players").LocalPlayer
+local Mouse = player:GetMouse()
+local UserInputService = game:GetService("UserInputService")
 
 local Plots = workspace:WaitForChild("Plots")
 local Base1 = Plots:WaitForChild("Base1")
@@ -14,6 +16,11 @@ local Base6 = Plots:WaitForChild("Base6")
 --ReplicatedStorage
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local ClaimPlot = Remotes:WaitForChild("ClaimPlot")
+local Announcement = Remotes:WaitForChild("Announcement")
+local Place = Remotes:WaitForChild("Place")
+local SavePlot = Remotes:WaitForChild("SavePlot")
+
+local Objects = ReplicatedStorage:WaitForChild("Objects")
 
 --UIs
 local FirstFrame = script.Parent:WaitForChild("FirstFrame")
@@ -27,6 +34,17 @@ local Claim = FirstFrame:WaitForChild("Claim")
 Title.Visible = true
 Play.Visible = true
 
+local Save = script.Parent:WaitForChild("Save")
+local SaveSave = Save:WaitForChild("SaveSave")
+local SaveLoading = Save:WaitForChild("SaveLoading")
+
+local MainFrame = script.Parent:WaitForChild("MainFrame")
+local Games = MainFrame:WaitForChild("Games")
+local Wall = Games:WaitForChild("Wall")
+local Exit = MainFrame:WaitForChild("Exit")
+
+local GamesButton = script.Parent:WaitForChild("GamesButton")
+
 --Workspace
 local Cameras = workspace:WaitForChild("Cameras")
 local FirstCamera = Cameras:WaitForChild("FirstCamera")
@@ -36,8 +54,12 @@ local Base3Camera = Cameras:WaitForChild("Base3Camera")
 local Base4Camera = Cameras:WaitForChild("Base4Camera")
 local Base5Camera = Cameras:WaitForChild("Base5Camera")
 local Base6Camera = Cameras:WaitForChild("Base6Camera")
-local TInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 0)
+local TInfo = TweenInfo.new(1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out, 0, false, 0)
+local TInfo2 = TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out, 0, false, 0)
 
+--Assets
+local selectedPlot = nil
+local baseFloor = nil
 
 
 Camera.CameraType = Enum.CameraType.Scriptable
@@ -90,6 +112,152 @@ Back.Activated:Connect(function()
 	
 	Title.Visible = true
 	Play.Visible = true
+end)
+
+local Moving = false
+local NewObject = nil
+local NewPart = nil
+local appliedRotation = CFrame.Angles(0, math.rad(0), 0)
+local rotateFunction
+local raycastParams = RaycastParams.new()
+raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+local function StartMoving(object)
+	local clone = Objects:FindFirstChild(object)
+	if not clone then warn("Not found clone") end
+	if not clone then return end
+	clone = clone:Clone()
+	clone.Parent = workspace
+	
+	NewObject = clone
+	NewPart = clone.PrimaryPart
+	
+	Moving = true
+	task.spawn(function()
+		repeat
+			task.wait(.1)
+			local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+			if raycast then
+				local vector3 = raycast.Position
+				local x = vector3.X
+				local y = vector3.Y
+				local z = vector3.Z
+				x = math.round(x / 5) * 5
+				y = math.round(y)
+				z = math.round(z / 5) * 5
+				vector3 = Vector3.new(x,y,z)
+				if NewObject then
+					TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
+				end
+			end
+		until not Moving
+	end)
+end
+local function StopMoving()
+	Moving = false
+	NewObject:Destroy()
+	NewObject = nil
+	NewPart = nil
+end
+
+
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.R and Moving then
+		if appliedRotation == CFrame.Angles(0, math.rad(0), 0) then
+			appliedRotation = CFrame.Angles(0, math.rad(90), 0)
+		elseif appliedRotation == CFrame.Angles(0, math.rad(90), 0) then
+			appliedRotation = CFrame.Angles(0, math.rad(180), 0)
+		elseif appliedRotation == CFrame.Angles(0, math.rad(180), 0) then
+			appliedRotation = CFrame.Angles(0, math.rad(270), 0)
+		elseif appliedRotation == CFrame.Angles(0, math.rad(270), 0) then
+			appliedRotation = CFrame.Angles(0, math.rad(0), 0)
+		end
+		
+		local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+		if raycast then
+			local vector3 = raycast.Position
+			local x = vector3.X
+			local y = vector3.Y
+			local z = vector3.Z
+			x = math.round(x / 5) * 5
+			y = math.round(y)
+			z = math.round(z / 5) * 5
+			vector3 = Vector3.new(x,y,z)
+			if NewObject then
+				TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
+			end
+		end
+	end
+end)
+Mouse.Move:Connect(function()
+	
+	if Moving then
+		local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+		if raycast then
+			local vector3 = raycast.Position
+			local x = vector3.X
+			local y = vector3.Y
+			local z = vector3.Z
+			x = math.round(x / 5) * 5
+			y = math.round(y)
+			z = math.round(z / 5) * 5
+			vector3 = Vector3.new(x,y,z)
+			if NewObject then
+				TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
+			end
+		end
+	end
+end)
+Mouse.Button1Up:Connect(function()
+	if Moving then
+		if not selectedPlot then return end
+		Place:FireServer(NewObject.Name,NewObject:GetPivot(),selectedPlot)
+	end
+end)
+
+----------------------------------------------------------------------------
+
+local TGamesButton = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,-20)})
+local TGamesButtonBack = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,0)})
+
+GamesButton.MouseEnter:Connect(function()
+	TGamesButton:Play()
+end)
+GamesButton.MouseLeave:Connect(function()
+	TGamesButtonBack:Play()
+end)
+GamesButton.Activated:Connect(function()
+	if not selectedPlot then return end
+	GamesButton.Visible = false
+	
+	MainFrame.Visible = true
+end)
+Exit.Activated:Connect(function()
+	GamesButton.Visible = true
+	
+	MainFrame.Visible = false
+end)
+
+local saving = false
+SaveSave.Activated:Connect(function()
+	saving = true
+	SaveSave.Visible = false
+	SaveLoading.Visible = true
+	SavePlot:FireServer(selectedPlot)
+	task.spawn(function()
+		repeat
+			TweenService:Create(SaveLoading, TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Rotation = 180}):Play()
+			task.wait(.5)
+			SaveLoading.Rotation = -180
+			TweenService:Create(SaveLoading, TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Rotation = 0}):Play()
+			task.wait(.5)
+		until not saving
+		SaveSave.Visible = true
+		SaveLoading.Visible = false
+	end)
+end)
+SavePlot.OnClientEvent:Connect(function()
+	saving = false
 end)
 
 Right.Activated:Connect(function()
@@ -209,4 +377,28 @@ Claim.Activated:Connect(function()
 	
 	Camera.CameraType = Enum.CameraType.Custom
 	Camera.CameraSubject = player.Character.Humanoid
+end)
+ClaimPlot.OnClientEvent:Connect(function(base)
+	if base == "Base1" then
+		selectedPlot = Base1
+	elseif base == "Base2" then
+		selectedPlot = Base2
+	elseif base == "Base3" then
+		selectedPlot = Base3
+	elseif base == "Base4" then
+		selectedPlot = Base4
+	elseif base == "Base5" then
+		selectedPlot = Base5
+	elseif base == "Base6" then
+		selectedPlot = Base6
+	end
+	baseFloor = selectedPlot:FindFirstChild("BaseFloor")
+	raycastParams.FilterType = Enum.RaycastFilterType.Include
+	raycastParams.FilterDescendantsInstances = {baseFloor}
+	Moving = true
+end)
+
+Wall.Activated:Connect(function()
+	if not selectedPlot then return end
+	StartMoving("Wall")
 end)
