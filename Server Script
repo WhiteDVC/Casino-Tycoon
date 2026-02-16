@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 --ReplicatedStorage
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -9,6 +10,7 @@ local ClaimPlot = Remotes:WaitForChild("ClaimPlot")
 local Announcement = Remotes:WaitForChild("Announcement")
 local Place = Remotes:WaitForChild("Place")
 local SavePlot = Remotes:WaitForChild("SavePlot")
+local Erase = Remotes:WaitForChild("Erase")
 
 --Workspace
 local Plots = workspace:WaitForChild("Plots")
@@ -27,17 +29,39 @@ local Spawn6 = Plots:WaitForChild("Spawn6")
 
 --DataStore
 local PlotData = DataStoreService:GetDataStore("PlotData")
+local MoneyData = DataStoreService:GetOrderedDataStore("MoneyData")
 
 --ServerStorage
 local Objects = ServerStorage:WaitForChild("Objects")
 
+--ServerScriptService
+local Module = require(ServerScriptService:WaitForChild("Module"))
+local Prices = Module.Prices
 
 
+Players.PlayerAdded:Connect(function(player)
+	local leaderstats = Instance.new("Folder",player)
+	leaderstats.Name = "leaderstats"
+	local Money = Instance.new("IntValue",leaderstats)
+	Money.Name = "Money"
+	local MoneySaved = MoneyData:GetAsync(player.UserId)
+	if MoneySaved then
+		Money.Value = MoneySaved
+	else
+		Money.Value = 500
+	end
+end)
 
-local function SavePlotFunction(plot: Folder, UserId)
+local function SavePlotFunction(plot: StringValue, UserId, player)
 	local e,m = pcall(function()
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local moneyValue = leaderstats:FindFirstChild("Money")
+			if moneyValue then
+				MoneyData:SetAsync(UserId,moneyValue.Value)
+			end
+		end
 		
-			
 		local Stuff = plot:FindFirstChild("Stuff")
 		local StuffData = {}
 		local Index = plot:FindFirstChild("Index")
@@ -59,7 +83,7 @@ local function LoadPlot(UserId,plot)
 
 		if getData then
 			for _, object in getData do
-				local model = ServerStorage:FindFirstChild(object.Name)
+				local model = Objects:FindFirstChild(object.Name)
 				if not model then continue end
 				local clone = model:Clone()
 				clone:PivotTo(Index.CFrame:ToWorldSpace(CFrame.new(table.unpack(object.cframe))))
@@ -91,17 +115,22 @@ ClaimPlot.OnServerEvent:Connect(function(player, plotName)
 	elseif plot.Name == "Base6" then
 		player.Character.HumanoidRootPart.CFrame = Spawn6.CFrame
 	end
-	LoadPlot(player.UserId,Base1)
+	LoadPlot(player.UserId,plot)
 	
 end)
 
 SavePlot.OnServerEvent:Connect(function(player,plot)
 	print(plot)
-	SavePlotFunction(plot,player.UserId)
+	SavePlotFunction(plot,player.UserId, player)
 	SavePlot:FireClient(player)
 end)
 
 Place.OnServerEvent:Connect(function(player,objectName,cframe,plot)
+	local e,m = pcall(function()
+		local playerMoney = player:FindFirstChild("leaderstats"):FindFirstChild("Money")
+		if not playerMoney then return end
+		playerMoney.Value -= Prices[objectName]
+	end)
 	local e,m = pcall(function()
 		local plot = Plots:FindFirstChild(plot.Name)
 		if not plot then return end
@@ -113,4 +142,15 @@ Place.OnServerEvent:Connect(function(player,objectName,cframe,plot)
 		clone.Parent = plot:FindFirstChild("Stuff")
 	end)
 	if not e then print(m) end
+end)
+
+Erase.OnServerEvent:Connect(function(player,object)
+	if object then
+		local e,m = pcall(function()
+			local playerMoney = player:FindFirstChild("leaderstats"):FindFirstChild("Money")
+			if not playerMoney then return end
+			playerMoney.Value += Prices[object.Name]
+		end)
+		object:Destroy()
+	end
 end)
