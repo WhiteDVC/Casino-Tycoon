@@ -13,12 +13,15 @@ local Base4 = Plots:WaitForChild("Base4")
 local Base5 = Plots:WaitForChild("Base5")
 local Base6 = Plots:WaitForChild("Base6")
 
+
+
 --ReplicatedStorage
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local ClaimPlot = Remotes:WaitForChild("ClaimPlot")
 local Announcement = Remotes:WaitForChild("Announcement")
 local Place = Remotes:WaitForChild("Place")
 local SavePlot = Remotes:WaitForChild("SavePlot")
+local Erase = Remotes:WaitForChild("Erase")
 
 local Objects = ReplicatedStorage:WaitForChild("Objects")
 
@@ -41,9 +44,16 @@ local SaveLoading = Save:WaitForChild("SaveLoading")
 local MainFrame = script.Parent:WaitForChild("MainFrame")
 local Games = MainFrame:WaitForChild("Games")
 local Wall = Games:WaitForChild("Wall")
+local Delete = MainFrame:WaitForChild("Delete")
 local Exit = MainFrame:WaitForChild("Exit")
+local DeleteText = MainFrame:WaitForChild("DeleteText")
+local MovingText = MainFrame:WaitForChild("MovingText")
 
 local GamesButton = script.Parent:WaitForChild("GamesButton")
+
+local Money = script.Parent:WaitForChild("Money")
+
+local Spend = script.Parent:WaitForChild("Spend")
 
 --Workspace
 local Cameras = workspace:WaitForChild("Cameras")
@@ -59,8 +69,10 @@ local TInfo2 = TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.
 
 --Assets
 local selectedPlot = nil
+local selectedPlotStuff = nil
 local baseFloor = nil
 
+-------------------------------------------------------------------
 
 Camera.CameraType = Enum.CameraType.Scriptable
 Camera.CFrame = FirstCamera.CFrame
@@ -122,6 +134,7 @@ local rotateFunction
 local raycastParams = RaycastParams.new()
 raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 local function StartMoving(object)
+	MovingText.Visible = true
 	local clone = Objects:FindFirstChild(object)
 	if not clone then warn("Not found clone") end
 	if not clone then return end
@@ -154,14 +167,44 @@ local function StartMoving(object)
 end
 local function StopMoving()
 	Moving = false
-	NewObject:Destroy()
+	if NewObject then
+		NewObject:Destroy()
+	end
 	NewObject = nil
 	NewPart = nil
+	MovingText.Visible = false
+end
+
+local Deleting = false
+local target = nil
+local HighLight = nil
+local function StartDeleting()
+	Deleting = true
+	DeleteText.Visible = true
+	Delete.BorderSizePixel = 5
+end
+local function StopDeleting()
+	Deleting = false
+	if HighLight then
+		HighLight.Enabled = false
+		HighLight = nil
+	end
+	if target then
+		target = nil
+	end
+	DeleteText.Visible = false
+	Delete.BorderSizePixel = 0
 end
 
 
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.X and Deleting then
+		StopDeleting()
+	end
+	
+	if input.KeyCode == Enum.KeyCode.X and Moving then
+		StopMoving()
+	end
 	if input.KeyCode == Enum.KeyCode.R and Moving then
 		if appliedRotation == CFrame.Angles(0, math.rad(0), 0) then
 			appliedRotation = CFrame.Angles(0, math.rad(90), 0)
@@ -189,12 +232,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		end
 	end
 end)
+local raycast
+local vector3
 Mouse.Move:Connect(function()
-	
 	if Moving then
-		local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+		raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
 		if raycast then
-			local vector3 = raycast.Position
+			vector3 = raycast.Position
 			local x = vector3.X
 			local y = vector3.Y
 			local z = vector3.Z
@@ -207,15 +251,115 @@ Mouse.Move:Connect(function()
 			end
 		end
 	end
-end)
-Mouse.Button1Up:Connect(function()
-	if Moving then
-		if not selectedPlot then return end
-		Place:FireServer(NewObject.Name,NewObject:GetPivot(),selectedPlot)
+	if Deleting and selectedPlot then
+		if target ~= Mouse.Target then
+			if HighLight then
+				HighLight.Enabled = false
+				HighLight = nil
+			end
+			
+			if Mouse.Target then
+				target = Mouse.Target
+				HighLight = target.Parent:FindFirstChild("HL")
+				
+				if target.Parent then
+					if target.Parent.Parent then
+						if target.Parent.Parent.Parent then
+							if HighLight and target.Parent.Parent.Parent.Name == selectedPlot.Name then
+								HighLight = target.Parent:FindFirstChild("HL")
+								HighLight.Enabled = true
+							end
+						end
+					end
+				end
+			else
+				target = nil
+			end
+		end
 	end
 end)
 
+local TInfoSpend = TweenInfo.new(0.75,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0)
+local function spendMoney(amount)
+	task.spawn(function()
+		if amount < 0 then
+			local clone = Spend:Clone()
+			clone.Text = tostring(amount)
+			clone.TextColor3 = Color3.fromRGB(255,0,0)
+			clone.Parent = Spend.Parent
+			local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
+			clone.Visible = true
+			spendTween:Play()
+			task.wait(.5)
+			clone:Destroy()
+		end
+		if amount > 0 then
+			local clone = Spend:Clone()
+			clone.Text = "+" .. tostring(amount)
+			clone.TextColor3 = Color3.fromRGB(0,255,0)
+			clone.Parent = Spend.Parent
+			local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
+			clone.Visible = true
+			spendTween:Play()
+			task.wait(.5)
+			clone:Destroy()
+		end
+
+	end)
+end
+Mouse.Button1Up:Connect(function()
+	if Moving then
+		Place:FireServer(NewObject.Name,CFrame.new(vector3) * appliedRotation,selectedPlot)
+	end
+	if Deleting then
+		if target:IsDescendantOf(selectedPlotStuff) then
+			Erase:FireServer(target.Parent)
+			target = nil
+		end
+	end
+end)
+
+
+
+
 ----------------------------------------------------------------------------
+local function formatNumber(n)
+	n = tonumber(n)
+	if not n then return "0" end
+
+	local left, num, right = tostring(n):match("^([^%d]*%d)(%d*)(.-)$")
+	return left .. (num:reverse():gsub("(%d%d%d)", "%1."):reverse()) .. right
+end
+local playerMoney
+local playerActualMoney
+task.spawn(function()
+	playerMoney = player:WaitForChild("leaderstats", math.huge):WaitForChild("Money", math.huge)
+	Money.Text = tostring(formatNumber(playerMoney.Value)) .. " $"
+	playerActualMoney = playerMoney.Value
+	playerMoney.Changed:Connect(function()
+		Money.Text = tostring(formatNumber(playerMoney.Value)) .. " $"
+		spendMoney(playerMoney.Value - playerActualMoney)
+		playerActualMoney = playerMoney.Value
+	end)
+end)
+
+
+local function plotClaimed()
+	GamesButton.Visible = true
+	SaveSave.Visible = true
+	Money.Visible = true
+end
+
+
+
+Delete.Activated:Connect(function()
+	if Deleting then
+		StopDeleting()
+	else
+		StopMoving()
+		StartDeleting()
+	end
+end)
 
 local TGamesButton = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,-20)})
 local TGamesButtonBack = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,0)})
@@ -235,6 +379,12 @@ end)
 Exit.Activated:Connect(function()
 	GamesButton.Visible = true
 	
+	if Moving then
+		StopMoving()
+	end
+	if Deleting then
+		StopDeleting()
+	end
 	MainFrame.Visible = false
 end)
 
@@ -392,13 +542,21 @@ ClaimPlot.OnClientEvent:Connect(function(base)
 	elseif base == "Base6" then
 		selectedPlot = Base6
 	end
+	selectedPlotStuff = selectedPlot:FindFirstChild("Stuff")
+	if not selectedPlotStuff then
+		warn("Duh")
+	end
 	baseFloor = selectedPlot:FindFirstChild("BaseFloor")
 	raycastParams.FilterType = Enum.RaycastFilterType.Include
 	raycastParams.FilterDescendantsInstances = {baseFloor}
-	Moving = true
+	plotClaimed()
 end)
 
 Wall.Activated:Connect(function()
 	if not selectedPlot then return end
+	StopDeleting()
 	StartMoving("Wall")
 end)
+
+task.wait(5)
+spendMoney(10)
