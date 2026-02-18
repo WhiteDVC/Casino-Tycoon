@@ -1,2 +1,2 @@
 # Casino-Tycoon
-I'm making a game in Roblox Studio with the language of Lua, 0% of what I've made is made with AI and I'll be posting new things soon :)
+I've made a game in which you can create your own casino! It isn't a full game, it's just a game prototype with a system for selecting your plot, many buttons, money, datastore and more. It's small, but the controls and mechanics are simple. You enter the game, click play, the camera moves and you can select plot. Later, you have money -starting with 500- and you can place walls for 100 each, and also sell them. Later, you can save what you've done for playing later! That's all, I hope you enjoy it :)
