@@ -3,6 +3,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ServerScriptService = game:GetService("ServerScriptService")
+local PathfindingService = game:GetService("PathfindingService")
 
 --ReplicatedStorage
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -11,6 +12,7 @@ local Announcement = Remotes:WaitForChild("Announcement")
 local Place = Remotes:WaitForChild("Place")
 local SavePlot = Remotes:WaitForChild("SavePlot")
 local Erase = Remotes:WaitForChild("Erase")
+local Setting = Remotes:WaitForChild("Setting")
 
 --Workspace
 local Plots = workspace:WaitForChild("Plots")
@@ -20,6 +22,24 @@ local Base3 = Plots:WaitForChild("Base3")
 local Base4 = Plots:WaitForChild("Base4")
 local Base5 = Plots:WaitForChild("Base5")
 local Base6 = Plots:WaitForChild("Base6")
+local Status1 = Base1:WaitForChild("Status")
+local Status2 = Base2:WaitForChild("Status")
+local Status3 = Base3:WaitForChild("Status")
+local Status4 = Base4:WaitForChild("Status")
+local Status5 = Base5:WaitForChild("Status")
+local Status6 = Base6:WaitForChild("Status")
+local Max1 = Base1:WaitForChild("Max")
+local Max2 = Base2:WaitForChild("Max")
+local Max3 = Base3:WaitForChild("Max")
+local Max4 = Base4:WaitForChild("Max")
+local Max5 = Base5:WaitForChild("Max")
+local Max6 = Base6:WaitForChild("Max")
+local Npcs1 = Base1:WaitForChild("Npcs")
+local Npcs2 = Base2:WaitForChild("Npcs")
+local Npcs3 = Base3:WaitForChild("Npcs")
+local Npcs4 = Base4:WaitForChild("Npcs")
+local Npcs5 = Base5:WaitForChild("Npcs")
+local Npcs6 = Base6:WaitForChild("Npcs")
 local Spawn1 = Plots:WaitForChild("Spawn1")
 local Spawn2 = Plots:WaitForChild("Spawn2")
 local Spawn3 = Plots:WaitForChild("Spawn3")
@@ -29,15 +49,303 @@ local Spawn6 = Plots:WaitForChild("Spawn6")
 
 --DataStore
 local PlotData = DataStoreService:GetDataStore("PlotData")
+local StartedData = DataStoreService:GetDataStore("StartedData")
 local MoneyData = DataStoreService:GetOrderedDataStore("MoneyData")
+local StatusData = DataStoreService:GetDataStore("StatusData")
 
 --ServerStorage
 local Objects = ServerStorage:WaitForChild("Objects")
+
+local Bots = ServerStorage:WaitForChild("Bots")
+local Bot = Bots:WaitForChild("Bot")
 
 --ServerScriptService
 local Module = require(ServerScriptService:WaitForChild("Module"))
 local Prices = Module.Prices
 
+
+local function CreateBot(folder, spawnPoint)
+	task.spawn(function()
+		local bot = Bots:GetChildren()[math.random(1,#Bots:GetChildren())]
+		bot = bot:Clone()
+		bot.Parent = folder
+		
+		local humanoid : Humanoid = bot:WaitForChild("Humanoid")
+		local humanoidRootPart : BasePart = bot:WaitForChild("HumanoidRootPart")
+		local path = PathfindingService:CreatePath({AgentRadius = 2, AgentHeight = 6, AgentCanJump = false, AgentCanClimb = false, WaypointSpacing = 5})
+		local waypoints = {}
+		local function moveTo(target, value)
+			path:ComputeAsync(humanoidRootPart.Position,target)
+			if path.Status == Enum.PathStatus.Success then 
+				waypoints = path:GetWaypoints()
+				if value then
+					value.Value = true
+				end
+				for _, waypoint in waypoints do
+					humanoid:MoveTo(waypoint.Position)
+					task.wait(.55)
+				end
+			else
+				return true
+			end
+		end
+		local Waypoints = folder.Parent:WaitForChild("Waypoints")
+		local Waypoint1 = Waypoints:WaitForChild("Waypoint1")
+		local Waypoint2 = Waypoints:WaitForChild("Waypoint2")
+		local MinX = math.min(Waypoint1.Position.X, Waypoint2.Position.X)
+		local MinZ = math.min(Waypoint1.Position.Z, Waypoint2.Position.Z)
+		local MaxX = math.max(Waypoint1.Position.X, Waypoint2.Position.X)
+		local MaxZ = math.max(Waypoint1.Position.Z, Waypoint2.Position.Z)
+		local Stuff : Folder = folder.Parent:WaitForChild("Stuff")
+		
+		local function RandomPosition()
+			local x = math.round(math.random(MinX, MaxX) / 5) * 5
+			local z = math.round(math.random(MinZ, MaxZ) / 5) * 5
+			return Vector3.new(x, humanoidRootPart.Position.Y, z)
+		end
+		local function MoveRandom()
+			local random = true
+			repeat
+				random = moveTo(RandomPosition())
+				task.wait()
+			until random == nil
+		end
+		
+		local function CheckGames()
+			local list = {}
+			local Stuff = Stuff:GetDescendants()
+			for _,v in Stuff do
+				if v:IsA("BoolValue") and v.Name == "Active" then
+					if not v.Value then
+						table.insert(list,v)
+					end
+				end
+			end
+			if #list > 0 then
+				return list[math.random(1,#list)]
+			end
+			return nil
+		end
+		
+		local function Play()
+			local selectedGame = CheckGames()
+			if selectedGame then
+				if moveTo(selectedGame.Parent.Position, selectedGame) then
+					MoveRandom()
+					return
+				end
+				task.wait(.5)
+				if not selectedGame.Parent then
+					MoveRandom()
+					return
+				end
+				humanoidRootPart.CFrame = selectedGame.Parent.CFrame
+				selectedGame:SetAttribute("Using", true)
+				
+				if selectedGame:GetAttribute("Type") == "Machine" then
+					local function PlayMachine()
+						local Wheel1 : Motor6D = selectedGame.Parent.Parent:WaitForChild("Part"):WaitForChild("Wheel1")
+						local Wheel2 : Motor6D = selectedGame.Parent.Parent:WaitForChild("Part"):WaitForChild("Wheel2")
+						local Wheel3 : Motor6D = selectedGame.Parent.Parent:WaitForChild("Part"):WaitForChild("Wheel3")
+						local n = math.random(1,3)
+						local n1
+						local n2
+						local n3
+						if n == 3 then
+							n1 = 4
+							n2 = 4
+							n3 = 4
+						else
+							local id = false
+							repeat
+								n1 = math.random(1,4)
+								n2 = math.random(1,4)
+								n3 = math.random(1,4)
+								
+								if n1 == 4 and n2 == 4 and n3 == 4 then
+									id = false
+								else
+									id = true
+								end
+							until id
+						end
+						
+						local w1 = Wheel1:GetAttribute("Rotation")
+						local w2 = Wheel2:GetAttribute("Rotation")
+						local w3 = Wheel3:GetAttribute("Rotation")
+						Wheel1:SetAttribute("Rotation", n1)
+						Wheel2:SetAttribute("Rotation", n2)
+						Wheel3:SetAttribute("Rotation", n3)
+						
+						local r1
+						local r2
+						local r3
+						if n1 < w1 then
+							r1 = (n1 + 4) - w1 + 8
+						else
+							r1 = n1 - w1 + 8
+						end
+						if n2 < w2 then
+							r2 = (n2 + 4) - w2 + 12
+						else
+							r2 = n2 - w2 + 12
+						end
+						if n3 < w3 then
+							r3 = (n3 + 4) - w3 + 16
+						else
+							r3 = n3 - w3 + 16
+						end
+						r1 = r1 * 90
+						r2 = r2 * 90
+						r3 = r3 * 90
+						
+						task.wait(0.7)
+						task.spawn(function()
+							selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Wheel"):Play()
+							task.wait(6.4)
+							selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Wheel"):Stop()
+						end)
+						task.wait(0.3)
+						for i = 1, 60 do
+							Wheel1.C0 = Wheel1.C0 * CFrame.Angles(math.rad(-r1 / 60),0,0)
+							Wheel2.C0 = Wheel2.C0 * CFrame.Angles(math.rad(-r2 / 80),0,0)
+							Wheel3.C0 = Wheel3.C0 * CFrame.Angles(math.rad(-r3 / 100),0,0)
+							task.wait(.05)
+						end
+						for i = 1, 20 do
+							Wheel2.C0 = Wheel2.C0 * CFrame.Angles(math.rad(-r2 / 80),0,0)
+							Wheel3.C0 = Wheel3.C0 * CFrame.Angles(math.rad(-r3 / 100),0,0)
+							task.wait(.05)
+						end
+						for i = 1, 20 do
+							Wheel3.C0 = Wheel3.C0 * CFrame.Angles(math.rad(-r3 / 100),0,0)
+							task.wait(.05)
+						end
+						
+						task.spawn(function()
+							
+							if n ~= 3 then
+								selectedGame.Parent.Parent:WaitForChild("Money").Value += 20
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Board"):WaitForChild("Win").Visible = true
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Ding"):Play()
+								task.wait(2)
+								if not selectedGame.Parent then return end
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Board"):WaitForChild("Win").Visible = false
+							else
+								selectedGame.Parent.Parent:WaitForChild("Money").Value -= 20
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Board"):WaitForChild("Lose").Visible = true
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Ding"):Play()
+								task.wait(2)
+								if not selectedGame.Parent then return end
+								selectedGame.Parent.Parent:WaitForChild("Text"):WaitForChild("Board"):WaitForChild("Lose").Visible = false
+							end
+						end)
+					end
+					
+					PlayMachine()
+					--[[local n = math.random(1,10)
+					if n <= 6 then
+						PlayMachine()
+					end]]
+					
+					selectedGame.Value = false
+					selectedGame:SetAttribute("Using", false)
+					MoveRandom()
+				end
+				
+			else
+				MoveRandom()
+			end
+		end
+		local function Leave()
+			local random = true
+			repeat
+				random = moveTo(spawnPoint.Position)
+				task.wait()
+			until random == nil
+			bot:Destroy()
+		end
+		
+		--BEHAVIOR
+		humanoidRootPart.CFrame = spawnPoint.CFrame
+		
+		Play()
+		task.wait(5)
+		Play()
+		task.wait(5)
+		Play()
+		task.wait(5)
+		Leave()
+		
+	end)
+end
+
+Status1.Changed:Connect(function()
+	if Status1.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs1, Spawn1)
+			until #Npcs1:GetChildren() >= Max1.Value
+			task.wait()
+		until Status1.Value == false
+	end
+end)
+Status2.Changed:Connect(function()
+	if Status2.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs2, Spawn2)
+			until #Npcs2:GetChildren() >= Max2.Value
+			task.wait()
+		until Status2.Value == false
+	end
+end)
+Status3.Changed:Connect(function()
+	if Status3.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs3, Spawn3)
+			until #Npcs3:GetChildren() >= Max3.Value
+			task.wait()
+		until Status3.Value == false
+	end
+end)
+Status4.Changed:Connect(function()
+	if Status4.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs4, Spawn4)
+			until #Npcs4:GetChildren() >= Max4.Value
+			task.wait()
+		until Status4.Value == false
+	end
+end)
+Status5.Changed:Connect(function()
+	if Status5.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs5, Spawn5)
+			until #Npcs5:GetChildren() >= Max5.Value
+			task.wait()
+		until Status5.Value == false
+	end
+end)
+Status6.Changed:Connect(function()
+	if Status6.Value then
+		repeat
+			repeat
+				task.wait(15)
+				CreateBot(Npcs6, Spawn6)
+			until #Npcs6:GetChildren() >= Max6.Value
+			task.wait()
+		until Status6.Value == false
+	end
+end)
 
 Players.PlayerAdded:Connect(function(player)
 	local leaderstats = Instance.new("Folder",player)
@@ -51,6 +359,8 @@ Players.PlayerAdded:Connect(function(player)
 		Money.Value = 500
 	end
 end)
+
+
 
 local function SavePlotFunction(plot: StringValue, UserId, player)
 	local e,m = pcall(function()
@@ -72,22 +382,54 @@ local function SavePlotFunction(plot: StringValue, UserId, player)
 			})
 		end
 		PlotData:SetAsync(UserId,StuffData)
+		StatusData:SetAsync(UserId,plot:WaitForChild("Status").Value)
 	end)
 	if not e then warn(m) end
 end
+Players.PlayerRemoving:Connect(function(player)
+	local UserId = player.UserId
+	local plot = nil
+	for _, plot1 in Plots:GetChildren() do
+		if plot1:IsA("StringValue") then
+			if plot1.Value == player.Name then
+				plot = plot1
+			end
+		end
+	end
+	if plot then
+		SavePlotFunction(plot,UserId,player)
+		plot:WaitForChild("Stuff"):ClearAllChildren()
+		plot:WaitForChild("Npcs"):ClearAllChildren()
+		plot:WaitForChild("Status").Value = false
+	end
+end)
+
 local function LoadPlot(UserId,plot)
 	local e,m = pcall(function()
 		local getData = PlotData:GetAsync(UserId)
+		local statusData = StatusData:GetAsync(UserId)
 
 		local Index = plot:FindFirstChild("Index")
-
+		
 		if getData then
+			local stuff = plot:FindFirstChild("Stuff")
+			if stuff then
+				stuff:ClearAllChildren()
+			else
+				warn("Not found stuff")
+			end
 			for _, object in getData do
 				local model = Objects:FindFirstChild(object.Name)
 				if not model then continue end
 				local clone = model:Clone()
 				clone:PivotTo(Index.CFrame:ToWorldSpace(CFrame.new(table.unpack(object.cframe))))
 				clone.Parent = plot:FindFirstChild("Stuff")
+			end
+		end
+		if statusData then
+			local status = plot:FindFirstChild("Status")
+			if status then
+				status.Value = statusData
 			end
 		end
 	end)
@@ -153,4 +495,11 @@ Erase.OnServerEvent:Connect(function(player,object)
 		end)
 		object:Destroy()
 	end
+end)
+
+Setting.OnServerEvent:Connect(function(player, setting, value)
+	local e,m = pcall(function()
+		setting.Value = value
+	end)
+	if not e then print(m) end
 end)
