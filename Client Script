@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game:GetService("Players").LocalPlayer
 local Mouse = player:GetMouse()
 local UserInputService = game:GetService("UserInputService")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local Plots = workspace:WaitForChild("Plots")
 local Base1 = Plots:WaitForChild("Base1")
@@ -22,10 +23,32 @@ local Announcement = Remotes:WaitForChild("Announcement")
 local Place = Remotes:WaitForChild("Place")
 local SavePlot = Remotes:WaitForChild("SavePlot")
 local Erase = Remotes:WaitForChild("Erase")
+local Setting = Remotes:WaitForChild("Setting")
 
 local Objects = ReplicatedStorage:WaitForChild("Objects")
 
+local Note1 = ReplicatedStorage:WaitForChild("Note1")
+local Note2 = ReplicatedStorage:WaitForChild("Note2")
+
 --UIs
+local CornerStore = script.Parent:WaitForChild("CornerStore")
+local GetOut = script.Parent:WaitForChild("GetOut")
+local TopFloor = script.Parent:WaitForChild("TopFloor")
+local Error = script.Parent:WaitForChild("Error")
+local Put = script.Parent:WaitForChild("Place")
+local Sell = script.Parent:WaitForChild("Sell")
+local function PlaySound(sound)
+	task.spawn(function()
+		if sound then
+			local newClone = sound:Clone()
+			newClone.Parent = sound.Parent
+			newClone:Play()
+			newClone.Ended:Wait()
+			newClone:Destroy()
+		end
+	end)
+end
+
 local FirstFrame = script.Parent:WaitForChild("FirstFrame")
 local Title = FirstFrame:WaitForChild("Title")
 local Play = FirstFrame:WaitForChild("Play")
@@ -41,15 +64,73 @@ local Save = script.Parent:WaitForChild("Save")
 local SaveSave = Save:WaitForChild("SaveSave")
 local SaveLoading = Save:WaitForChild("SaveLoading")
 
+local Notes = script.Parent:WaitForChild("Notes")
+
+local Info = script.Parent:WaitForChild("Info")
+local InfoFrame = Info:WaitForChild("Frame")
+local MachineView = InfoFrame:WaitForChild("Machine")
+local Exit = InfoFrame:WaitForChild("Exit")
+
+local Mini = script.Parent:WaitForChild("Mini")
+
 local MainFrame = script.Parent:WaitForChild("MainFrame")
-local Games = MainFrame:WaitForChild("Games")
-local Wall = Games:WaitForChild("Wall")
+local GestionFrame = script.Parent:WaitForChild("GestionFrame")
+local GestionStatus = GestionFrame:WaitForChild("Status")
+local GestionStatusOpen = GestionStatus:WaitForChild("Open")
+local GestionStatusClosed = GestionStatus:WaitForChild("Closed")
+
+local BuildFrame = MainFrame:WaitForChild("BuildFrame") --HERE TO BUILD
+
+local Wall = BuildFrame:WaitForChild("Wall")
+local WoodWall = BuildFrame:WaitForChild("Wood Wall")
+local ConcreteWall = BuildFrame:WaitForChild("Concrete Wall")
+local MarbleWall = BuildFrame:WaitForChild("Marble Wall")
+local Door = BuildFrame:WaitForChild("Door")
+local DoubleDoor = BuildFrame:WaitForChild("Double Door")
+local LargeWindow = BuildFrame:WaitForChild("Large Window")
+local Window = BuildFrame:WaitForChild("Window")
+local WoodWindow = BuildFrame:WaitForChild("Wood Window")
+local ConcreteWindow = BuildFrame:WaitForChild("Concrete Window")
+local MarbleWindow = BuildFrame:WaitForChild("Marble Window")
+
+local Planks = BuildFrame:WaitForChild("Planks")
+local Wood = BuildFrame:WaitForChild("Wood")
+local Concrete = BuildFrame:WaitForChild("Concrete")
+local Marble = BuildFrame:WaitForChild("Marble")
+
+local Roof = BuildFrame:WaitForChild("Roof")
+local Light = BuildFrame:WaitForChild("Light")
+
+
+
+local GamesFrame = MainFrame:WaitForChild("GamesFrame") --HERE TO BUILD RRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH
+
+local Machine = GamesFrame:WaitForChild("Machine")
+
+
+local NatureFrame = MainFrame:WaitForChild("NatureFrame") --HERE TO BUILD RRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH
+
+local Rock = NatureFrame:WaitForChild("Rock")
+local Tree = NatureFrame:WaitForChild("Tree")
+
+
+local DecorationFrame = MainFrame:WaitForChild("DecorationFrame") --HERE TO BUILD RRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH
+
+
 local Delete = MainFrame:WaitForChild("Delete")
-local Exit = MainFrame:WaitForChild("Exit")
+local Copy = MainFrame:WaitForChild("Copy")
+local MainExit = MainFrame:WaitForChild("Exit")
+local GestionExit = GestionFrame:WaitForChild("Exit")
+local Build = MainFrame:WaitForChild("Build")
+local Games = MainFrame:WaitForChild("Games")
+local Nature = MainFrame:WaitForChild("Nature")
+local Decoration = MainFrame:WaitForChild("Decoration")
 local DeleteText = MainFrame:WaitForChild("DeleteText")
+local CopyText = MainFrame:WaitForChild("CopyText")
 local MovingText = MainFrame:WaitForChild("MovingText")
 
 local GamesButton = script.Parent:WaitForChild("GamesButton")
+local GestionButton = script.Parent:WaitForChild("GestionButton")
 
 local Money = script.Parent:WaitForChild("Money")
 
@@ -71,6 +152,62 @@ local TInfo2 = TweenInfo.new(0.08, Enum.EasingStyle.Cubic, Enum.EasingDirection.
 local selectedPlot = nil
 local selectedPlotStuff = nil
 local baseFloor = nil
+local baseTexture = nil
+
+local Rotations = {
+	["Wall"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Wood Wall"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Concrete Wall"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Marble Wall"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Large Window"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Window"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Wood Window"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Concrete Window"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Marble Window"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	
+	["Planks"] = {["xAlign"] = 0,["zAlign"] = 0},
+	["Wood"] = {["xAlign"] = 0,["zAlign"] = 0},
+	["Concrete"] = {["xAlign"] = 0,["zAlign"] = 0},
+	["Marble"] = {["xAlign"] = 0,["zAlign"] = 0},
+	
+	["Roof"] = {["xAlign"] = 0,["zAlign"] = 0},
+	["Light"] = {["xAlign"] = 0,["zAlign"] = 0},
+	
+	["Door"] = {["xAlign"] = 2.5,["zAlign"] = 0},
+	["Double Door"] = {["xAlign"] = 2.5,["zAlign"] = 2.5},
+	
+	["Rock"] = {["xAlign"] = 0,["zAlign"] = 0},
+	["Tree"] = {["xAlign"] = 0,["zAlign"] = 0},
+	
+	["Machine"] = {["xAlign"] = 0,["zAlign"] = 0},
+}
+local Prices = {
+	["Wall"] = 100,
+	["Wood Wall"] = 120,
+	["Concrete Wall"] = 130,
+	["Marble Wall"] = 140,
+	["Window"] = 150,
+	["Large Window"] = 180,
+	["Wood Window"] = 180,
+	["Concrete Window"] = 190,
+	["Marble Window"] = 200,
+
+	["Planks"] = 35,
+	["Wood"] = 30,
+	["Concrete"] = 40,
+	["Marble"] = 45,
+
+	["Roof"] = 40,
+	["Light"] = 100,
+
+	["Door"] = 150,
+	["Double Door"] = 300,
+
+	["Rock"] = 80,
+	["Tree"] = 120,
+
+	["Machine"] = 300,
+}
 
 -------------------------------------------------------------------
 
@@ -133,7 +270,12 @@ local appliedRotation = CFrame.Angles(0, math.rad(0), 0)
 local rotateFunction
 local raycastParams = RaycastParams.new()
 raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+local xAlign = 0
+local zAlign = 0
 local function StartMoving(object)
+	baseTexture.Transparency = 0
+	xAlign = Rotations[object]["xAlign"]
+	zAlign = Rotations[object]["zAlign"]
 	MovingText.Visible = true
 	local clone = Objects:FindFirstChild(object)
 	if not clone then warn("Not found clone") end
@@ -146,26 +288,37 @@ local function StartMoving(object)
 	
 	Moving = true
 	task.spawn(function()
-		repeat
-			task.wait(.1)
-			local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
-			if raycast then
-				local vector3 = raycast.Position
-				local x = vector3.X
-				local y = vector3.Y
-				local z = vector3.Z
-				x = math.round(x / 5) * 5
-				y = math.round(y)
-				z = math.round(z / 5) * 5
-				vector3 = Vector3.new(x,y,z)
-				if NewObject then
-					TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
+		local e,m = pcall(function()
+			repeat
+				task.wait(.1)
+				local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+				if raycast then
+					local vector3 = raycast.Position
+					local x = vector3.X
+					local y = vector3.Y
+					local z = vector3.Z
+					if appliedRotation == CFrame.Angles(0, math.rad(90), 0) or appliedRotation == CFrame.Angles(0, math.rad(270), 0) then
+						x = math.round((x - xAlign) / 5) * 5 + xAlign
+						y = math.round(y)
+						z = math.round((z - zAlign) / 5) * 5 + zAlign
+					else
+						x = math.round((x - zAlign) / 5) * 5 + zAlign
+						y = math.round(y)
+						z = math.round((z - xAlign) / 5) * 5 + xAlign
+					end
+					vector3 = Vector3.new(x,NewObject:GetAttribute("Height"),z)
+					if NewObject then
+						TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
+					end
 				end
-			end
-		until not Moving
+			until not Moving
+		end)
 	end)
 end
 local function StopMoving()
+	baseTexture.Transparency = 1
+	xAlign = 0
+	zAlign = 0
 	Moving = false
 	if NewObject then
 		NewObject:Destroy()
@@ -179,11 +332,13 @@ local Deleting = false
 local target = nil
 local HighLight = nil
 local function StartDeleting()
+	baseTexture.Transparency = 0
 	Deleting = true
 	DeleteText.Visible = true
 	Delete.BorderSizePixel = 5
 end
 local function StopDeleting()
+	baseTexture.Transparency = 1
 	Deleting = false
 	if HighLight then
 		HighLight.Enabled = false
@@ -195,11 +350,44 @@ local function StopDeleting()
 	DeleteText.Visible = false
 	Delete.BorderSizePixel = 0
 end
+local Copying = false
+local targetCopy = nil
+local function StartCopying()
+	Copying = true
+	CopyText.Visible = true
+	Copy.BorderSizePixel = 5
+end
+local function StopCopying()
+	Copying = false
+	if targetCopy then
+		targetCopy = nil
+	end
+	CopyText.Visible = false
+	Copy.BorderSizePixel = 0
+end
+local function OpenInfo(sT)
+	if not sT then return end
+	if sT.Name == "Machine" then
+		MachineView.Visible = true
+	end
+	Info.Visible = true
+end
+local function CloseInfo()
+	Info.Visible = false
+	
+	MachineView.Visible = false
+end
 
 
+local raycast
+local vector3
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.X and Deleting then
 		StopDeleting()
+	end
+	
+	if input.KeyCode == Enum.KeyCode.X and Copying then
+		StopCopying()
 	end
 	
 	if input.KeyCode == Enum.KeyCode.X and Moving then
@@ -216,25 +404,61 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			appliedRotation = CFrame.Angles(0, math.rad(0), 0)
 		end
 		
-		local raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+		raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
 		if raycast then
-			local vector3 = raycast.Position
+			vector3 = raycast.Position
 			local x = vector3.X
 			local y = vector3.Y
 			local z = vector3.Z
-			x = math.round(x / 5) * 5
-			y = math.round(y)
-			z = math.round(z / 5) * 5
-			vector3 = Vector3.new(x,y,z)
+			if appliedRotation == CFrame.Angles(0, math.rad(90), 0) or appliedRotation == CFrame.Angles(0, math.rad(270), 0) then
+				x = math.round((x - xAlign) / 5) * 5 + xAlign
+				y = math.round(y)
+				z = math.round((z - zAlign) / 5) * 5 + zAlign
+			else
+				x = math.round((x - zAlign) / 5) * 5 + zAlign
+				y = math.round(y)
+				z = math.round((z - xAlign) / 5) * 5 + xAlign
+			end
+			vector3 = Vector3.new(x,NewObject:GetAttribute("Height"),z)
 			if NewObject then
 				TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
 			end
 		end
 	end
 end)
-local raycast
-local vector3
+
+local selectedThing = nil
+task.spawn(function()
+	while wait() do
+		if not Mouse.Target then continue end
+		if not Mouse.Target then continue end
+		if not Mouse.Target.Parent then continue end
+		if Mouse.Target.Parent.Name == "Machine" then
+			Mini.Position = UDim2.new(0,Mouse.X,0,Mouse.Y)
+			selectedThing = Mouse.Target.Parent
+			Mini.Visible = true
+		else
+			selectedThing = nil
+			Mini.Visible = false
+		end
+	end
+end)
+
 Mouse.Move:Connect(function()
+	if not Moving and not Deleting and not Copying then
+		if Mouse.Target then
+			if Mouse.Target.Parent then
+				if Mouse.Target.Parent.Name == "Machine" then
+					Mini.Position = UDim2.new(0,Mouse.X,0,Mouse.Y)
+					selectedThing = Mouse.Target.Parent
+					Mini.Visible = true
+				else
+					selectedThing = nil
+					Mini.Visible = false
+				end
+			end
+		end
+	end
 	if Moving then
 		raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
 		if raycast then
@@ -242,10 +466,16 @@ Mouse.Move:Connect(function()
 			local x = vector3.X
 			local y = vector3.Y
 			local z = vector3.Z
-			x = math.round(x / 5) * 5
-			y = math.round(y)
-			z = math.round(z / 5) * 5
-			vector3 = Vector3.new(x,y,z)
+			if appliedRotation == CFrame.Angles(0, math.rad(90), 0) or appliedRotation == CFrame.Angles(0, math.rad(270), 0) then
+				x = math.round((x - xAlign) / 5) * 5 + xAlign
+				y = math.round(y)
+				z = math.round((z - zAlign) / 5) * 5 + zAlign
+			else
+				x = math.round((x - zAlign) / 5) * 5 + zAlign
+				y = math.round(y)
+				z = math.round((z - xAlign) / 5) * 5 + xAlign
+			end
+			vector3 = Vector3.new(x,NewObject:GetAttribute("Height"),z)
 			if NewObject then
 				TweenService:Create(NewObject.PrimaryPart,TInfo2,{CFrame = CFrame.new(vector3) * appliedRotation}):Play()
 			end
@@ -277,14 +507,48 @@ Mouse.Move:Connect(function()
 			end
 		end
 	end
+	if Copying and selectedPlot then
+		if targetCopy ~= Mouse.Target then
+
+			if Mouse.Target then
+				targetCopy = Mouse.Target
+			else
+				targetCopy = nil
+			end
+		end
+	end
 end)
 
 local TInfoSpend = TweenInfo.new(0.75,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0)
-local function spendMoney(amount)
+local function spendMoney(amount, message)
 	task.spawn(function()
-		if amount < 0 then
+		if not message then
+			if amount < 0 then
+				local clone = Spend:Clone()
+				clone.Text = tostring(amount)
+				clone.TextColor3 = Color3.fromRGB(255,0,0)
+				clone.Parent = Spend.Parent
+				local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
+				clone.Visible = true
+				spendTween:Play()
+				task.wait(.5)
+				clone:Destroy()
+			end
+			if amount > 0 then
+				local clone = Spend:Clone()
+				clone.Text = "+" .. tostring(amount)
+				clone.TextColor3 = Color3.fromRGB(0,255,0)
+				clone.Parent = Spend.Parent
+				local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
+				clone.Visible = true
+				spendTween:Play()
+				task.wait(.5)
+				clone:Destroy()
+			end
+		else
+			PlaySound(Error)
 			local clone = Spend:Clone()
-			clone.Text = tostring(amount)
+			clone.Text = tostring(message)
 			clone.TextColor3 = Color3.fromRGB(255,0,0)
 			clone.Parent = Spend.Parent
 			local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
@@ -293,33 +557,172 @@ local function spendMoney(amount)
 			task.wait(.5)
 			clone:Destroy()
 		end
-		if amount > 0 then
-			local clone = Spend:Clone()
-			clone.Text = "+" .. tostring(amount)
-			clone.TextColor3 = Color3.fromRGB(0,255,0)
-			clone.Parent = Spend.Parent
-			local spendTween = TweenService:Create(clone,TInfoSpend,{TextTransparency = 1,Position = UDim2.new(0.5,0,0,100)})
-			clone.Visible = true
-			spendTween:Play()
-			task.wait(.5)
-			clone:Destroy()
-		end
-
 	end)
 end
-Mouse.Button1Up:Connect(function()
-	if Moving then
-		Place:FireServer(NewObject.Name,CFrame.new(vector3) * appliedRotation,selectedPlot)
+local function Note(message, green)
+	task.spawn(function()
+		local clone
+		if green then
+			clone = Note1:Clone()
+		else
+			PlaySound(Error)
+			clone = Note2:Clone()
+		end
+		clone.Parent = Notes
+		clone.Text = message
+		clone.Visible = true
+		task.wait(.5)
+		for i = 1, 50 do
+			clone.TextTransparency = i * 0.02
+			task.wait()
+		end
+		clone:Destroy()
+	end)
+end
+local function checkMoney(amount)
+	local playerMoney = player:WaitForChild("leaderstats", math.huge):WaitForChild("Money", math.huge)
+	if playerMoney.Value >= amount then
+		return true
 	end
-	if Deleting then
+	PlaySound(Error)
+	return false
+end
+local function checkPart(cframe, size)
+	local count = 0
+	local newCFrame = cframe
+	local parts = workspace:GetPartBoundsInBox(newCFrame,size,OverlapParams.new())
+	for _, part in parts do
+		if part then
+			if part.Name == "Part" then
+				count += 1
+			end
+		end
+	end
+	print(count)
+	if count > 1 then
+		return false
+	else
+		return true
+	end
+end
+local function checkDeletable(model)
+	local descendants = model:GetDescendants()
+	for _, descendant in descendants do
+		if descendant.Name == "Active" then
+			if descendant:GetAttribute("Using") == true then
+				return false
+			end
+		end
+	end
+	return true
+end
+Mouse.Button1Up:Connect(function()
+	if selectedThing then
+		OpenInfo(selectedThing)
+	end
+	if Moving and NewPart then
+		if checkMoney(Prices[NewObject.Name]) and checkPart(NewPart.CFrame, NewPart.Size) then
+			
+			raycast = workspace:Raycast(Camera.CFrame.Position,Mouse.Hit.LookVector * 100,raycastParams)
+			if raycast then
+				vector3 = raycast.Position
+				local x = vector3.X
+				local y = vector3.Y
+				local z = vector3.Z
+				if appliedRotation == CFrame.Angles(0, math.rad(90), 0) or appliedRotation == CFrame.Angles(0, math.rad(270), 0) then
+					x = math.round((x - xAlign) / 5) * 5 + xAlign
+					y = math.round(y)
+					z = math.round((z - zAlign) / 5) * 5 + zAlign
+				else
+					x = math.round((x - zAlign) / 5) * 5 + zAlign
+					y = math.round(y)
+					z = math.round((z - xAlign) / 5) * 5 + xAlign
+				end
+				vector3 = Vector3.new(x,NewObject:GetAttribute("Height"),z)
+			end
+			
+			NewObject.PrimaryPart.CFrame = CFrame.new(vector3) * appliedRotation
+			Place:FireServer(NewObject.Name,NewObject.PrimaryPart.CFrame,selectedPlot)
+			PlaySound(Put)
+		elseif checkMoney(Prices[NewObject.Name]) then
+			Note("There is something here!", false)
+		elseif checkPart(NewPart.Position) then
+			spendMoney(0,"Not enough money")
+		else
+			spendMoney(0,"Not enough money!")
+		end
+	end
+	if Deleting and target then
 		if target:IsDescendantOf(selectedPlotStuff) then
-			Erase:FireServer(target.Parent)
-			target = nil
+			if checkDeletable(target.Parent) then
+				Erase:FireServer(target.Parent)
+				PlaySound(Sell)
+				target = nil
+			else
+				Note("This is being used!", false)
+			end
+		end
+	end
+	if Copying and targetCopy then
+		if not targetCopy then return end
+		if targetCopy.Parent and targetCopy:IsDescendantOf(selectedPlotStuff) then
+			
+			StartMoving(targetCopy.Parent.Name)
+			StopCopying()
 		end
 	end
 end)
 
+local randomNumber = math.random(1,3)
+task.spawn(function()
+	while true do
+		if randomNumber == 1 then
+			CornerStore:Play()
+			task.wait(160)
+		end
+		if randomNumber == 2 then
+			GetOut:Play()
+			task.wait(103)
+		end
+		if randomNumber == 3 then
+			TopFloor:Play()
+			task.wait(132)
+			randomNumber = 0
+		end
+		randomNumber += 1
+	end
+end)
 
+task.spawn(function()
+	while wait() do
+		if Deleting and selectedPlot then
+			if target ~= Mouse.Target then
+				if HighLight then
+					HighLight.Enabled = false
+					HighLight = nil
+				end
+				
+				if Mouse.Target then
+					target = Mouse.Target
+					HighLight = target.Parent:FindFirstChild("HL")
+
+					if target.Parent then
+						if target.Parent.Parent then
+							if target.Parent.Parent.Parent then
+								if HighLight and target.Parent.Parent.Parent.Name == selectedPlot.Name then
+									HighLight = target.Parent:FindFirstChild("HL")
+									HighLight.Enabled = true
+								end
+							end
+						end
+					end
+				else
+					target = nil
+				end
+			end
+		end
+	end
+end)
 
 
 ----------------------------------------------------------------------------
@@ -346,9 +749,11 @@ end)
 
 local function plotClaimed()
 	GamesButton.Visible = true
+	GestionButton.Visible = true
 	SaveSave.Visible = true
 	Money.Visible = true
 end
+
 
 
 
@@ -357,27 +762,81 @@ Delete.Activated:Connect(function()
 		StopDeleting()
 	else
 		StopMoving()
+		StopCopying()
 		StartDeleting()
+	end
+end)
+Copy.Activated:Connect(function()
+	if Copying then
+		StopCopying()
+	else
+		StopMoving()
+		StopDeleting()
+		StartCopying()
 	end
 end)
 
 local TGamesButton = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,-20)})
 local TGamesButtonBack = TweenService:Create(GamesButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,0)})
+local TGestionButton = TweenService:Create(GestionButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,-20)})
+local TGestionButtonBack = TweenService:Create(GestionButton,TweenInfo.new(0.1,Enum.EasingStyle.Linear,Enum.EasingDirection.In,0,false,0),{Position = UDim2.new(0.5,0,0.99,0)})
+
+local function TurnOption(button : TextButton, value)
+	if not button then return end
+	if value then
+		button.Active = false
+		button.BackgroundTransparency = 0
+	else
+		button.Active = true
+		button.BackgroundTransparency = 1
+	end
+end
 
 GamesButton.MouseEnter:Connect(function()
 	TGamesButton:Play()
 end)
+GestionButton.MouseEnter:Connect(function()
+	TGestionButton:Play()
+end)
 GamesButton.MouseLeave:Connect(function()
 	TGamesButtonBack:Play()
+end)
+GestionButton.MouseLeave:Connect(function()
+	TGestionButtonBack:Play()
 end)
 GamesButton.Activated:Connect(function()
 	if not selectedPlot then return end
 	GamesButton.Visible = false
+	GestionButton.Visible = false
 	
+	GestionFrame.Visible = false
 	MainFrame.Visible = true
 end)
-Exit.Activated:Connect(function()
+local alreadyopened = false
+local PlotStatus = false
+GestionButton.Activated:Connect(function()
+	if not selectedPlot then return end
+	GestionButton.Visible = false
+	GamesButton.Visible = false
+	
+	local e,m = pcall(function()
+		if not alreadyopened then
+			alreadyopened = true
+			if selectedPlot:WaitForChild("Status").Value then
+				TurnOption(GestionStatusOpen, true)
+				TurnOption(GestionStatusClosed, false)
+				PlotStatus = true
+			end
+		end
+	end)
+	if not e then print(m) end
+	
+	MainFrame.Visible = false
+	GestionFrame.Visible = true
+end)
+MainExit.Activated:Connect(function()
 	GamesButton.Visible = true
+	GestionButton.Visible = true
 	
 	if Moving then
 		StopMoving()
@@ -386,6 +845,54 @@ Exit.Activated:Connect(function()
 		StopDeleting()
 	end
 	MainFrame.Visible = false
+end)
+Build.Activated:Connect(function()
+	if not selectedPlot then return end
+	BuildFrame.Visible = true
+	GamesFrame.Visible = false
+	NatureFrame.Visible = false
+	DecorationFrame.Visible = false
+end)
+Games.Activated:Connect(function()
+	if not selectedPlot then return end
+	BuildFrame.Visible = false
+	GamesFrame.Visible = true
+	NatureFrame.Visible = false
+	DecorationFrame.Visible = false
+end)
+Nature.Activated:Connect(function()
+	if not selectedPlot then return end
+	BuildFrame.Visible = false
+	GamesFrame.Visible = false
+	NatureFrame.Visible = true
+	DecorationFrame.Visible = false
+end)
+Decoration.Activated:Connect(function()
+	if not selectedPlot then return end
+	BuildFrame.Visible = false
+	GamesFrame.Visible = false
+	NatureFrame.Visible = false
+	DecorationFrame.Visible = true
+end)
+
+
+GestionExit.Activated:Connect(function()
+	GestionButton.Visible = true
+	GamesButton.Visible = true
+	
+	GestionFrame.Visible = false
+end)
+GestionStatusOpen.Activated:Connect(function()
+	TurnOption(GestionStatusOpen, true)
+	TurnOption(GestionStatusClosed, false)
+	PlotStatus = true
+	Setting:FireServer(selectedPlot:WaitForChild("Status"), PlotStatus)
+end)
+GestionStatusClosed.Activated:Connect(function()
+	TurnOption(GestionStatusOpen, false)
+	TurnOption(GestionStatusClosed, true)
+	PlotStatus = false
+	Setting:FireServer(selectedPlot:WaitForChild("Status"), PlotStatus)
 end)
 
 local saving = false
@@ -547,16 +1054,210 @@ ClaimPlot.OnClientEvent:Connect(function(base)
 		warn("Duh")
 	end
 	baseFloor = selectedPlot:FindFirstChild("BaseFloor")
+	baseTexture = baseFloor:FindFirstChild("Texture")
+	if baseTexture then
+		baseTexture = baseTexture:FindFirstChild("Texture")
+	else
+		warn("Not found texture")
+	end
+	if baseFloor then
+		baseFloor = baseFloor:FindFirstChild("Floor")
+	end
 	raycastParams.FilterType = Enum.RaycastFilterType.Include
 	raycastParams.FilterDescendantsInstances = {baseFloor}
 	plotClaimed()
 end)
 
+---------------------------------------------------------------------------------
+
 Wall.Activated:Connect(function()
 	if not selectedPlot then return end
 	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
 	StartMoving("Wall")
 end)
+WoodWall.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Wood Wall")
+end)
+ConcreteWall.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Concrete Wall")
+end)
+MarbleWall.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Marble Wall")
+end)
+Window.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Window")
+end)
+LargeWindow.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Large Window")
+end)
+WoodWindow.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Wood Window")
+end)
+ConcreteWindow.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Concrete Window")
+end)
+MarbleWindow.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Marble Window")
+end)
 
-task.wait(5)
-spendMoney(10)
+
+
+Planks.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Planks")
+end)
+Wood.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Wood")
+end)
+Concrete.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Concrete")
+end)
+Marble.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Marble")
+end)
+
+
+Roof.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Roof")
+end)
+Light.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Light")
+end)
+
+
+Door.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Door")
+end)
+DoubleDoor.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Double Door")
+end)
+
+
+Machine.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Machine")
+end)
+
+
+Rock.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Rock")
+end)
+Tree.Activated:Connect(function()
+	if not selectedPlot then return end
+	StopDeleting()
+	StopCopying()
+	if Moving then
+		StopMoving()
+	end
+	StartMoving("Tree")
+end)
